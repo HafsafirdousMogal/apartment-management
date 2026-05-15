@@ -2,6 +2,8 @@ package com.example.demo;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -23,21 +25,33 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+                .cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // Public routes - no token needed
+                        // Public
                         .requestMatchers("/auth/**").permitAll()
-                        // Admin only
+
+                        // Notices — everyone reads, only admin creates/deletes
+                        .requestMatchers(HttpMethod.GET, "/notices/**").hasAnyRole("ADMIN", "TENANT", "OWNER")
                         .requestMatchers("/notices/**").hasRole("ADMIN")
+
+                        // Apartments — admin only
                         .requestMatchers("/apartments/**").hasRole("ADMIN")
-                        // Admin and Tenant and Owner
+
+                        // Tenants — all roles
                         .requestMatchers("/tenants/**").hasAnyRole("ADMIN", "TENANT", "OWNER")
+
+                        // Complaints — all roles can read and create
                         .requestMatchers("/complaints/**").hasAnyRole("ADMIN", "TENANT", "OWNER")
+
+                        // Rent — admin and tenant only
                         .requestMatchers("/rent/**").hasAnyRole("ADMIN", "TENANT")
+
+                        // Maintenance charges — all roles
                         .requestMatchers("/maintenance-charges/**").hasAnyRole("ADMIN", "TENANT", "OWNER")
-                        // Everything else needs authentication
+
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

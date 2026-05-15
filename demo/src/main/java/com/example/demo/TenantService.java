@@ -41,4 +41,9 @@ public class TenantService {
         tenantRepository.deleteById(id);
     }
 
+    public Tenant getTenantByEmail(String email) {
+        return tenantRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Tenant not found with email: " + email));
+    }
+
 }

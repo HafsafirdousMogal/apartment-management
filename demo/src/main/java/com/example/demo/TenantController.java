@@ -34,5 +34,9 @@ public class TenantController {
         tenantService.deleteTenant(id);
         return "Tenant deleted successfully!";
     }
+    @GetMapping("/me")
+    public Tenant getMyProfile(@RequestParam String email) {
+        return tenantService.getTenantByEmail(email);
+    }
 
 }
